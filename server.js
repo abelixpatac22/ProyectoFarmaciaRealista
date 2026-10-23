@@ -50,7 +50,7 @@ async function crearAdminInicial() {
   const email = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
   const password = process.env.ADMIN_PASSWORD;
   if (!email || !password) {
-    console.log("⚠️ No hay ningún administrador. Define ADMIN_EMAIL y ADMIN_PASSWORD en el .env para crearlo.");
+    console.log("No hay ningún administrador. Define ADMIN_EMAIL y ADMIN_PASSWORD en el .env para crearlo.");
     return;
   }
 
@@ -71,7 +71,7 @@ async function crearAdminInicial() {
       fecha_ingreso: new Date()
     });
   }
-  console.log(`👤 Administrador inicial listo: ${email}`);
+  console.log(`Administrador inicial listo: ${email}`);
 }
 
 // Ruta de prueba
