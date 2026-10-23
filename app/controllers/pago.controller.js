@@ -72,7 +72,7 @@ exports.webhook = async (req, res) => {
     // 1. Verificamos la firma criptográfica (Stripe usa la variable de entorno aquí)
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    console.error("⚠️ Error de seguridad del Webhook:", err.message);
+    console.error("Error de seguridad del Webhook:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -90,10 +90,10 @@ exports.webhook = async (req, res) => {
         // 4. ¡Magia! Cambiamos el estado de 'Pendiente' a 'Pagado'
         transaccion.estado_pago = 'Pagado';
         await transaccion.save();
-        console.log(`✅ ¡Éxito! Transacción ${session.id} actualizada a Pagado automáticamente.`);
+        console.log(`Transacción ${session.id} actualizada a Pagado automáticamente.`);
       }
     } catch (error) {
-      console.error("❌ Error actualizando la base de datos:", error);
+      console.error("Error actualizando la base de datos:", error);
     }
   }
 
