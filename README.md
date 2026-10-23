@@ -21,6 +21,12 @@ servidor no arranca y dice cuál falta.
 
 ## Publicarlo en Render
 
+**Opción rápida (Blueprint):** New → Blueprint → elige este repositorio. `render.yaml` crea la base
+`farmacia-db` y el servicio `farmacia-api`, conecta `DATABASE_URL` y genera `JWT_SECRET`; solo pide
+`ADMIN_EMAIL`, `ADMIN_PASSWORD`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (puede ir vacía) y `FRONTEND_URL`.
+
+**Opción manual:**
+
 1. **Base de datos**: New → Postgres. Cuando esté lista, en *Connections* copia la
    **Internal Database URL** (para el servicio web) y la **External Database URL** (para tu computadora).
 2. **Servicio web**: New → Web Service, conecta este repositorio de GitHub.
