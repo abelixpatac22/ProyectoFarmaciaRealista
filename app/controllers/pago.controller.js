@@ -17,6 +17,10 @@ exports.createCheckout = async (req, res) => {
       return res.status(400).send({ message: "La factura no tiene un total válido para cobrar." });
     }
 
+    // FRONTEND_URL puede traer varias URLs separadas por coma: Stripe regresa a la página desde donde se compró
+    const frontendUrls = (process.env.FRONTEND_URL || "").split(",").map(url => url.trim()).filter(Boolean);
+    const frontendUrl = frontendUrls.includes(req.headers.origin) ? req.headers.origin : frontendUrls[0];
+
     // 1. Generar la sesión de cobro segura en Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -35,11 +39,11 @@ exports.createCheckout = async (req, res) => {
       mode: 'payment',
       // Tras pagar (o cancelar) Stripe regresa al usuario a la tienda, que ya tiene esas dos páginas.
       // Sin FRONTEND_URL usa las páginas de texto de este backend.
-      success_url: process.env.FRONTEND_URL
-        ? `${process.env.FRONTEND_URL}/pago/exitoso?factura=${id_factura}`
+      success_url: frontendUrl
+        ? `${frontendUrl}/pago/exitoso?factura=${id_factura}`
         : `${process.env.BACKEND_URL || 'http://localhost:8080'}/api/pagos/success`,
-      cancel_url: process.env.FRONTEND_URL
-        ? `${process.env.FRONTEND_URL}/pago/cancelado?factura=${id_factura}`
+      cancel_url: frontendUrl
+        ? `${frontendUrl}/pago/cancelado?factura=${id_factura}`
         : `${process.env.BACKEND_URL || 'http://localhost:8080'}/api/pagos/cancel`,
     });
 

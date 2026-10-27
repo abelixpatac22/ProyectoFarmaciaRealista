@@ -13,9 +13,11 @@ const cors = require("cors");
 
 const app = express();
 
-// Configuración de CORS: con FRONTEND_URL solo acepta peticiones de esa página; sin ella, de cualquiera
+// Configuración de CORS: con FRONTEND_URL solo acepta peticiones de esas páginas; sin ella, de cualquiera.
+// Puede llevar varias URLs separadas por coma, ej. la tienda publicada y http://localhost:5173
+const frontendUrls = (process.env.FRONTEND_URL || "").split(",").map(url => url.trim()).filter(Boolean);
 var corsOptions = {
-  origin: process.env.FRONTEND_URL || "*"
+  origin: frontendUrls.length > 0 ? frontendUrls : "*"
 };
 
 app.use(cors(corsOptions));
