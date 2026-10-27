@@ -6,6 +6,7 @@ exports.create = (req, res) => {
     codigo_barras: req.body.codigo_barras,
     nombre: req.body.nombre,
     descripcion: req.body.descripcion,
+    imagen_url: req.body.imagen_url,
     precio_costo: req.body.precio_costo,
     precio_venta: req.body.precio_venta,
     stock_actual: req.body.stock_actual,

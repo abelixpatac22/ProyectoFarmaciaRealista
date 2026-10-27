@@ -36,6 +36,11 @@ db.sequelize.sync({ alter: true })
   .then(async () => {
     console.log("¡Sincronización exitosa con la base de datos!");
     await crearAdminInicial();
+    // Cada minuto se devuelve el stock de las compras web que se quedaron sin pagar (ventana de Stripe cerrada)
+    const revisarPendientes = () => pagosController.liberarPendientesVencidas()
+      .catch(err => console.error("Error revisando compras pendientes:", err.message));
+    revisarPendientes();
+    setInterval(revisarPendientes, 60 * 1000);
   })
   .catch((err) => {
     console.log("Error al sincronizar la base de datos: " + err.message);

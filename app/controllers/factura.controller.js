@@ -32,7 +32,9 @@ exports.create = async (req, res) => {
       impuesto: 0,
       total: 0,
       metodo_pago: req.body.metodo_pago,
-      estado_factura: req.body.estado_factura || "Completada"
+      // La venta de un empleado ya está cobrada en caja. La compra web queda Pendiente hasta que Stripe
+      // confirme el pago: el stock queda apartado y se devuelve si el cliente cancela (ver pago.controller.js)
+      estado_factura: req.empleado ? (req.body.estado_factura || "Completada") : "Pendiente"
     }, { transaction: t });
 
     // B. Recorremos la lista de productos vendidos (detalles)
@@ -47,8 +49,9 @@ exports.create = async (req, res) => {
         throw new Error(`Cantidad inválida para el producto con ID ${item.id_producto}.`);
       }
 
-      // 1. Buscar el producto en la base de datos
-      const producto = await Producto.findByPk(item.id_producto, { transaction: t });
+      // 1. Buscar el producto en la base de datos. lock: nadie más cambia su stock hasta terminar esta factura
+      //    (otra compra o una devolución al mismo tiempo esperan su turno en vez de pisarse el número)
+      const producto = await Producto.findByPk(item.id_producto, { transaction: t, lock: t.LOCK.UPDATE });
 
       // 2. Validar que exista, que se pueda vender y que haya suficiente stock
       if (!producto || producto.estado === false) {

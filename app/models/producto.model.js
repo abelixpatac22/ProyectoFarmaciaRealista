@@ -4,6 +4,8 @@ module.exports = (sequelize, Sequelize) => {
     codigo_barras: { type: Sequelize.STRING(50), unique: true },
     nombre: { type: Sequelize.STRING(150) },
     descripcion: { type: Sequelize.TEXT },
+    // Enlace a una imagen que ya está en internet (no se suben archivos al servidor)
+    imagen_url: { type: Sequelize.STRING(500) },
     precio_costo: { type: Sequelize.DECIMAL(10,2) },
     precio_venta: { type: Sequelize.DECIMAL(10,2) },
     stock_actual: { type: Sequelize.INTEGER },
