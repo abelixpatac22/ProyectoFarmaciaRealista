@@ -58,6 +58,10 @@ exports.create = async (req, res) => {
       if (!producto || producto.estado === false) {
         throw new Error(`El producto con ID ${item.id_producto} no existe o ya no está a la venta.`);
       }
+      // Con receta solo se vende en la farmacia física (un empleado registra la venta tras ver la receta)
+      if (producto.requiere_receta && !req.empleado) {
+        throw new Error(`'${producto.nombre}' requiere receta médica: solo se vende en la farmacia física.`);
+      }
       const precio = Number(producto.precio_venta);
       if (producto.precio_venta === null || !Number.isFinite(precio)) {
         throw new Error(`El producto '${producto.nombre}' no tiene precio de venta.`);
