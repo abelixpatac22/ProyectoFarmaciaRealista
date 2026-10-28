@@ -148,7 +148,7 @@ exports.cancelar = async (req, res) => {
 
 // Minutos que tiene el cliente para pagar. Stripe no deja sesiones de menos de 30 minutos, así que pasado
 // este tiempo es el backend quien cierra la sesión de Stripe y devuelve el stock apartado.
-const MINUTOS_PARA_PAGAR = 3;
+const MINUTOS_PARA_PAGAR = 2;
 
 // Revisión automática (server.js la corre cada minuto): si el cliente cerró la ventana de Stripe sin
 // pagar ni cancelar, la tienda nunca avisa. Aquí se buscan las compras web que llevan más de
