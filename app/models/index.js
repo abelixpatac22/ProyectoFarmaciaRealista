@@ -27,6 +27,8 @@ db.productos = require("./producto.model.js")(sequelize, Sequelize);
 db.facturas = require("./factura.model.js")(sequelize, Sequelize);
 db.detalle_facturas = require("./detalle_factura.model.js")(sequelize, Sequelize);
 db.transacciones_pago = require("./transaccion_pago.model.js")(sequelize, Sequelize);
+db.lotes = require("./lote.model.js")(sequelize, Sequelize);
+db.detalle_factura_lotes = require("./detalle_factura_lote.model.js")(sequelize, Sequelize);
 
 // 2. Definir las Relaciones (Claves Foráneas)
 
@@ -53,6 +55,18 @@ db.detalle_facturas.belongsTo(db.productos, { foreignKey: 'id_producto' });
 // Factura -> Transacciones Pago (1:N)
 db.facturas.hasMany(db.transacciones_pago, { foreignKey: 'id_factura' });
 db.transacciones_pago.belongsTo(db.facturas, { foreignKey: 'id_factura' });
+
+// Producto -> Lotes (1:N)
+db.productos.hasMany(db.lotes, { foreignKey: 'id_producto' });
+db.lotes.belongsTo(db.productos, { foreignKey: 'id_producto' });
+
+// Detalle Factura -> Lotes de donde salió (1:N)
+db.detalle_facturas.hasMany(db.detalle_factura_lotes, { foreignKey: 'id_detalle' });
+db.detalle_factura_lotes.belongsTo(db.detalle_facturas, { foreignKey: 'id_detalle' });
+
+// Lote -> Ventas que salieron de él (1:N)
+db.lotes.hasMany(db.detalle_factura_lotes, { foreignKey: 'id_lote' });
+db.detalle_factura_lotes.belongsTo(db.lotes, { foreignKey: 'id_lote' });
 
 module.exports = db;
 

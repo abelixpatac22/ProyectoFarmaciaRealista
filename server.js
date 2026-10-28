@@ -36,6 +36,7 @@ db.sequelize.sync({ alter: true })
   .then(async () => {
     console.log("¡Sincronización exitosa con la base de datos!");
     await crearAdminInicial();
+    await crearLotesIniciales();
     // Cada minuto se devuelve el stock de las compras web que se quedaron sin pagar (ventana de Stripe cerrada)
     const revisarPendientes = () => pagosController.liberarPendientesVencidas()
       .catch(err => console.error("Error revisando compras pendientes:", err.message));
@@ -45,6 +46,24 @@ db.sequelize.sync({ alter: true })
   .catch((err) => {
     console.log("Error al sincronizar la base de datos: " + err.message);
   });
+
+// Migración a lotes: el stock que existía antes del control de vencimientos no tenía lote.
+// A cada producto con stock y sin ningún lote se le crea el lote L-INICIAL con esas unidades.
+async function crearLotesIniciales() {
+  const { Op } = db.Sequelize;
+  const productos = await db.productos.findAll({ where: { stock_actual: { [Op.gt]: 0 } } });
+  for (const producto of productos) {
+    if (await db.lotes.count({ where: { id_producto: producto.id_producto } }) > 0) continue;
+    await db.lotes.create({
+      id_producto: producto.id_producto,
+      numero_lote: "L-INICIAL",
+      fecha_vencimiento: "2027-06-30",
+      cantidad_inicial: producto.stock_actual,
+      cantidad_actual: producto.stock_actual
+    });
+    console.log(`Lote L-INICIAL creado para '${producto.nombre}' con ${producto.stock_actual} unidades.`);
+  }
+}
 
 // Crea el primer administrador (ADMIN_EMAIL / ADMIN_PASSWORD del .env) si aún no existe ninguno
 async function crearAdminInicial() {
@@ -94,6 +113,7 @@ require("./app/routes/proveedor.routes")(app);
 require("./app/routes/producto.routes")(app);
 require("./app/routes/factura.routes")(app);
 require("./app/routes/pago.routes")(app);
+require("./app/routes/lote.routes")(app);
 
 // Configurar el puerto y encender el servidor
 const PORT = process.env.PORT || 8080;

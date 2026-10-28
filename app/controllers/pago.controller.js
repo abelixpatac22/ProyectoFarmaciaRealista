@@ -3,8 +3,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const db = require("../models");
 const TransaccionPago = db.transacciones_pago;
 const Factura = db.facturas;
-const DetalleFactura = db.detalle_facturas;
-const Producto = db.productos;
+const { devolverALotes } = require("../services/inventario.js");
 
 // Marca como pagadas la transacción y su factura
 async function marcarPagada(transaccion) {
@@ -12,7 +11,7 @@ async function marcarPagada(transaccion) {
   await Factura.update({ estado_factura: 'Pagada' }, { where: { id_factura: transaccion.id_factura } });
 }
 
-// Cancela una factura Pendiente y devuelve al inventario el stock que había apartado.
+// Cancela una factura Pendiente y devuelve a sus lotes el stock que había apartado.
 // Si ya estaba Pagada o Cancelada no hace nada, así el stock nunca se devuelve dos veces.
 async function cancelarFactura(id_factura) {
   await db.sequelize.transaction(async (t) => {
@@ -20,14 +19,8 @@ async function cancelarFactura(id_factura) {
     const factura = await Factura.findByPk(id_factura, { transaction: t, lock: t.LOCK.UPDATE });
     if (!factura || factura.estado_factura !== 'Pendiente') return;
 
-    const detalles = await DetalleFactura.findAll({ where: { id_factura }, transaction: t });
-    for (const detalle of detalles) {
-      await Producto.increment('stock_actual', {
-        by: detalle.cantidad,
-        where: { id_producto: detalle.id_producto },
-        transaction: t
-      });
-    }
+    // Cada unidad regresa al mismo lote del que salió
+    await devolverALotes(id_factura, t);
 
     await factura.update({ estado_factura: 'Cancelada' }, { transaction: t });
     await TransaccionPago.update(

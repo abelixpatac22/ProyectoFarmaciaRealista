@@ -3,6 +3,7 @@ const Factura = db.facturas;
 const DetalleFactura = db.detalle_facturas;
 const Producto = db.productos;
 const sequelize = db.sequelize; // Importante: Necesitamos esto para usar Transacciones
+const { descontarFEFO } = require("../services/inventario.js");
 
 // En Guatemala el precio al público ya incluye IVA: el total se desglosa en subtotal + impuesto
 const IVA = 0.12;
@@ -53,7 +54,7 @@ exports.create = async (req, res) => {
       //    (otra compra o una devolución al mismo tiempo esperan su turno en vez de pisarse el número)
       const producto = await Producto.findByPk(item.id_producto, { transaction: t, lock: t.LOCK.UPDATE });
 
-      // 2. Validar que exista, que se pueda vender y que haya suficiente stock
+      // 2. Validar que exista y que se pueda vender
       if (!producto || producto.estado === false) {
         throw new Error(`El producto con ID ${item.id_producto} no existe o ya no está a la venta.`);
       }
@@ -61,25 +62,21 @@ exports.create = async (req, res) => {
       if (producto.precio_venta === null || !Number.isFinite(precio)) {
         throw new Error(`El producto '${producto.nombre}' no tiene precio de venta.`);
       }
-      if (producto.stock_actual < cantidad) {
-        throw new Error(`Stock insuficiente para '${producto.nombre}'. Solicitado: ${cantidad}, Disponible: ${producto.stock_actual}`);
-      }
 
-      // 3. Descontar el stock actual
-      await producto.update({
-        stock_actual: producto.stock_actual - cantidad
-      }, { transaction: t });
-
-      // 4. Guardar el detalle de la factura con el precio de la base de datos
+      // 3. Guardar el detalle de la factura con el precio de la base de datos
       const subtotalLinea = redondear(precio * cantidad);
       totalGeneral += subtotalLinea;
-      await DetalleFactura.create({
+      const detalle = await DetalleFactura.create({
         id_factura: factura.id_factura,
         id_producto: item.id_producto,
         cantidad,
         precio_unitario: precio,
         subtotal_linea: subtotalLinea
       }, { transaction: t });
+
+      // 4. Descontar de los lotes sin vencer, el que vence primero (FEFO). Si no alcanza, lanza el error
+      //    "Stock insuficiente" y toda la factura se deshace
+      await descontarFEFO(producto, cantidad, detalle.id_detalle, t);
     }
 
     // C. Totales de la factura: total 112 -> subtotal 100 + IVA 12
@@ -131,7 +128,15 @@ exports.findOne = (req, res) => {
       { model: db.empleados, attributes: ['nombre', 'puesto'] },
       { 
         model: db.detalle_facturas, 
-        include: [{ model: db.productos, attributes: ['nombre'] }] // Trae el nombre del producto vendido
+        include: [
+          { model: db.productos, attributes: ['nombre'] }, // Trae el nombre del producto vendido
+          // Y de qué lote salió cada unidad (trazabilidad)
+          {
+            model: db.detalle_factura_lotes,
+            attributes: ['cantidad'],
+            include: [{ model: db.lotes, attributes: ['numero_lote', 'fecha_vencimiento'] }]
+          }
+        ]
       }
     ]
   })
