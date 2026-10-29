@@ -37,7 +37,7 @@ fechas de vencimiento y panel de administración para empleados.
 - **Panel de empleados** con login, roles (`admin` y `empleado`) y gestión de productos, proveedores,
   clientes, empleados, lotes y facturas.
 
-## Correrlo en tu computadora
+## Para poder correrlo en tu computadora .
 
 Necesitas Node.js 20 o más reciente y una base PostgreSQL.
 
