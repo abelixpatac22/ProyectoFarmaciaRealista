@@ -56,13 +56,13 @@ Al arrancar, el servidor:
 
 ## Variables de entorno
 
-Todas están explicadas en `.env.example`. El `.env` nunca se sube a GitHub.
+Todas están explicadas en `.env.example`. El `.env` no se subio.
 
 | Variable | Para qué |
 | --- | --- |
 | `DATABASE_URL` | Conexión a PostgreSQL |
 | `JWT_SECRET` | Clave para firmar las sesiones de empleados |
-| `JWT_EXPIRES_IN` | Cuánto dura una sesión (por defecto `8h`) |
+| `JWT_EXPIRES_IN` | Cuánto dura una sesión (por defecto `8h`)  |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Primer administrador |
 | `STRIPE_SECRET_KEY` | Clave secreta de Stripe (`sk_test_...` en modo prueba) |
 | `STRIPE_WEBHOOK_SECRET` | Opcional: solo si se configura el webhook de Stripe |
@@ -95,19 +95,6 @@ Notas:
 - `/api/lotes` acepta los filtros `?estado=Activo|Retirado` e `?id_producto=`.
 - `POST /api/pagos/webhook` recibe los avisos de Stripe si se configura `STRIPE_WEBHOOK_SECRET`.
 
-## Base de datos
-
-```
-proveedores 1───N productos 1───N lotes
-                     │                │
-                     1                1
-                     │                │
-                     N                N
-clientes 1───N facturas 1───N detalle_facturas 1───N detalle_factura_lotes
-                  │
-empleados 1───N ──┤
-                  1───N transacciones_pago
-```
 
 | Tabla | Guarda |
 | --- | --- |
@@ -135,17 +122,3 @@ app/
 ├── middleware/      verificarToken, tokenOpcional, esAdmin
 └── routes/          Rutas de cada recurso
 ```
-
-## Publicarlo en Render
-
-1. **Base de datos:** New → Postgres. En *Connections* están la **Internal Database URL** (para el
-   servicio web) y la **External Database URL** (para conectarse desde una computadora).
-2. **Servicio web:** New → Web Service, conectado a este repositorio.
-   - Build command: `npm install`
-   - Start command: `npm start`
-   - Environment: las variables de `.env.example`, con `DATABASE_URL` = la Internal Database URL y
-     `FRONTEND_URL` = la URL de la tienda.
-3. Cada `git push` a `main` vuelve a publicar el servicio.
-
-En el plan gratis de Render el servicio se duerme tras 15 minutos sin visitas y la primera petición
-tarda unos 50 segundos; la base gratis vence a los 30 días de creada.
